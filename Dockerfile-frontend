@@ -1,0 +1,23 @@
+# Usar a imagem oficial do Node.js como base
+FROM node:18.17.0
+
+# Habilitar o Corepack para usar Yarn (ou pnpm) de forma estável
+RUN corepack enable
+
+# Defina o diretório de trabalho
+WORKDIR /app
+
+# Copie os arquivos de dependências (package.json e package-lock.json)
+COPY frontend/package.json frontend/package-lock.json /app/
+
+# Instale as dependências do projeto usando npm
+RUN npm install
+
+# Copie o restante dos arquivos do frontend para dentro do container
+COPY frontend /app/
+
+# Exponha a porta em que o frontend irá rodar
+EXPOSE 3000
+
+# Comando para iniciar a aplicação frontend
+CMD ["yarn", "start"]

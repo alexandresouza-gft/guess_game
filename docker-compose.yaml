@@ -1,0 +1,72 @@
+services:
+  db:
+    image: postgres:15
+    container_name: game_postgres
+    restart: always  # Reinicia automaticamente em caso de falha
+    environment:
+      POSTGRES_USER: gameadmin
+      POSTGRES_PASSWORD: secretpassword
+      POSTGRES_DB: gamedb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - game_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile-backend
+    container_name: flask-backend
+    restart: always  # Reinicia automaticamente em caso de falha
+    environment:
+      - FLASK_APP=run.py
+      - FLASK_DB_TYPE=postgres
+      - FLASK_DB_USER=gameadmin
+      - FLASK_DB_NAME=gamedb
+      - FLASK_DB_PASSWORD=secretpassword
+      - FLASK_DB_HOST=db
+      - FLASK_DB_PORT=5432
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    networks:
+      - game_network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile-frontend
+    container_name: react-frontend
+    restart: always  # Reinicia automaticamente em caso de falha
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:5000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - game_network
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile-nginx
+    container_name: nginx-proxy
+    restart: always  # Reinicia automaticamente em caso de falha
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+    networks:
+      - game_network
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  game_network:
+    driver: bridge

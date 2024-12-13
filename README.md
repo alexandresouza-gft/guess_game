@@ -1,7 +1,3 @@
-Aqui está um exemplo de um arquivo `README.md` para o seu jogo:
-
----
-
 # Jogo de Adivinhação com Flask
 
 Este é um simples jogo de adivinhação desenvolvido utilizando o framework Flask. O jogador deve adivinhar uma senha criada aleatoriamente, e o sistema fornecerá feedback sobre o número de letras corretas e suas respectivas posições.
@@ -12,144 +8,219 @@ Este é um simples jogo de adivinhação desenvolvido utilizando o framework Fla
 - Adivinhe a senha e receba feedback se as letras estão corretas e/ou em posições corretas.
 - As senhas são armazenadas  utilizando base64.
 - As adivinhações incorretas retornam uma mensagem com dicas.
-  
+
+## Estrutura do Projeto
+
+Este projeto utiliza o Docker Compose para gerenciar a execução de múltiplos serviços. A configuração está definida no arquivo `docker-compose.yml` que contém os seguintes serviços:
+
+* Banco de Dados (PostgreSQL)
+* Backend (Flask)
+* Frontend (React)
+* Proxy Reverso (Nginx)
+
 ## Requisitos
 
-- Python 3.8+
-- Flask
-- Um banco de dados local (ou um mecanismo de armazenamento configurado em `current_app.db`)
-- node 18.17.0
+- Docker e Docker Compose instalados no sistema.
+- Certifique-se de que as portas 5432, 5000, 3000, e 80 estão disponíveis no host.
 
 ## Instalação
 
-1. Clone o repositório:
+1. Instalação do Docker e Docker Compose no Ubuntu
 
-   ```bash
-   git clone https://github.com/fams/guess_game.git
-   cd guess-game
-   ```
+```bash 
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-2. Crie um ambiente virtual e ative-o:
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
 
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # Linux/Mac
-   venv\Scripts\activate  # Windows
-   ```
+# Verificar a Versão do Docker Compose
+docker compose version
 
-3. Instale as dependências:
+# Verificar a Versão do Docker
+docker version
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+```
 
-4. Configure o banco de dados com as variáveis de ambiente no arquivo start-backend.sh
-    1. Para sqlite
+# Configuração dos Serviços
 
-        ```bash
-            export FLASK_APP="run.py"
-            export FLASK_DB_TYPE="sqlite"            # Use SQLITE
-            export FLASK_DB_PATH="caminho/db.sqlite" # caminho do banco
-        ```
+### **1. Banco de Dados (PostgreSQL)**
 
-    2. Para Postgres
+Este serviço fornece um banco de dados PostgreSQL para a aplicação.
 
-        ```bash
-            export FLASK_APP="run.py"
-            export FLASK_DB_TYPE="postgres"       # Use postgres
-            export FLASK_DB_USER="postgres"       # Usuário do banco
-            export FLASK_DB_NAME="postgres"       # Nome do Banco
-            export FLASK_DB_PASSWORD="secretpass" # Senha do banco
-            export FLASK_DB_HOST="localhost"      # Hostname
-            export FLASK_DB_PORT="5432"           # Porta
-        ```
+ - Imagem: `postgres:15`
+ - Container Name: `game_postgres`
+ - Porta Exposta: `5432`
+ - Rede: `game_network`
+ - Variáveis de Ambiente:
 
-    3. Para DynamoDB
+    -   `POSTGRES_USER`: Nome do usuário administrador (default: `gameadmin`)
+    -   `POSTGRES_PASSWORD`: Senha do administrador (default: `secretpassword`)
+    -   `POSTGRES_DB`: Nome do banco de dados (default: `gamedb`)
 
-        ```bash
-        export FLASK_APP="run.py"
-        export FLASK_DB_TYPE="dynamodb"       # Use postgres
-        export AWS_DEFAULT_REGION="us-east-1" # AWS region
-        export AWS_ACCESS_KEY_ID="FAKEACCESSKEY123456" 
-        export AWS_SECRET_ACCESS_KEY="FakeSecretAccessKey987654321"
-        export AWS_SESSION_TOKEN="FakeSessionTokenABCDEFGHIJKLMNOPQRSTUVXYZ1234567890"
-        ```
+Comando para acessar o banco de dados:
 
-5. Execute o backend
+```bash
+docker exec -it game_postgres psql -U gameadmin -d gamedb
+```
+### **2. Backend (Flask)**
 
-   ```bash
-   ./start-backend.sh &
-   ```
+Este serviço implementa a lógica de negócios usando Flask.
 
-## Frontend
-No diretorio de frontend
+- Dockerfile: `Dockerfile-backend`
+- Container Name: `flask-backend`
+- Porta Exposta:` 5000`
+- Variáveis de Ambiente:
 
-1. Instale o node com o nvm. Se não tiver o nvm instalado, siga o [tutorial](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating)
+    -   `FLASK_APP`: Arquivo principal do Flask (default: `run.py`)
+    -   `FLASK_DB_TYPE`: Tipo do banco de dados (default: `postgres`)
+    -   `FLASK_DB_USER`: Usuário do banco (default: `gameadmin`)
+    -   `FLASK_DB_PASSWORD`: Senha do banco (default: `secretpassword`)
+    -   `FLASK_DB_NAME`: Nome do banco (default: `gamedb`)
+    -   `FLASK_DB_HOST`: Host do banco de dados (default: `db`)
+    -   `FLASK_DB_PORT`: Porta do banco de dados (default: `5432`)
 
-    ```bash
-    nvm install 18.17.0
-    nvm use 18.17.0
-    # Habilite o yarn
-    corepack enable
-    ```
+- Volume Persistente: Armazena os dados do banco em `pgdata` para persistência.
+- Rede: `game_network`
 
-2. Instale as dependências do node com o npm:
+Build do Backend:
 
-    ```bash
-    npm install
-    ```
+Certifique-se de que o Dockerfile Dockerfile-backend está configurado corretamente. Para construir a imagem manualmente:
 
-3. Exporte a url onde está executando o backend e execute o backend.
+```bash
+docker compose build backend
+```
 
-   ```bash
-    export REACT_APP_BACKEND_URL=http://localhost:5000
-    yarn start
-   ```
+### **3. Frontend (React)**
 
-## Como Jogar
+Este serviço implementa a interface do usuário usando React.
 
-### 1. Criar um novo jogo
+-   **Dockerfile:** `Dockerfile-frontend`
+-   **Container Name:** `react-frontend`
+-   **Porta Exposta:** `3000`
+-   **Variáveis de Ambiente:**
+    -   `REACT_APP_BACKEND_URL`: URL do backend (default: `http://localhost:5000`)
+-   **Dependências:** Depende do serviço `backend` para iniciar.
+-   **Rede:** `game_network`
 
-Acesse a url do frontend http://localhost:3000
+#### **Build do Frontend:**
 
-Digite uma frase secreta
+Certifique-se de que o Dockerfile `Dockerfile-frontend` está configurado corretamente. Para construir a imagem manualmente:
 
-Envie
+```bash
+docker compose build frontend
+```
 
-Salve o game-id
+### **4. Proxy Reverso (Nginx)**
+
+Este serviço implementa um proxy reverso usando Nginx para gerenciar o tráfego entre o frontend e o backend.
+
+-   **Dockerfile:** `Dockerfile-nginx`
+-   **Container Name:** `nginx-proxy`
+-   **Porta Exposta:** `80`
+-   **Dependências:** Depende do serviço `frontend` para iniciar.
+-   **Rede:** `game_network`
+
+## **Configuração de Volumes**
+
+-   **Volume Persistente:** `pgdata`
+    -   Local: `/var/lib/postgresql/data`
+    -   Tipo: `local`
+    -   Usado para persistir os dados do banco de dados PostgreSQL.
+
+## **Como Executar a Aplicação**
+
+### **Passo 1: Construir as Imagens**
+
+Se necessário, você pode construir todas as imagens do projeto antes de iniciar:
+
+bash
+
+Copiar código
+
+`docker compose build` 
+
+### **Passo 2: Subir os Contêineres**
+
+Suba os serviços definidos no `docker-compose.yml`:
+
+bash
+
+Copiar código
+
+`docker compose up -d` 
+
+-   O comando `-d` executa os serviços em segundo plano.
 
 
-### 2. Adivinhar a senha
+## **Gerenciamento de Contêineres**
 
-Acesse a url do frontend http://localhost:3000
+### **Verificar o Status dos Serviços**
 
-Vá para o endponint breaker
+bash
 
-entre com o game_id que foi gerado pelo Creator
+Copiar código
 
-Tente adivinhar
+`docker compose ps` 
 
-## Estrutura do Código
+### **Parar os Contêineres**
 
-### Rotas:
+bash
 
-- **`/create`**: Cria um novo jogo. Armazena a senha codificada em base64 e retorna um `game_id`.
-- **`/guess/<game_id>`**: Permite ao usuário adivinhar a senha. Compara a adivinhação com a senha armazenada e retorna o resultado.
+Copiar código
 
-### Classes Importantes:
+`docker compose down` 
 
-- **`Guess`**: Classe responsável por gerenciar a lógica de comparação entre a senha e a tentativa do jogador.
-- **`WrongAttempt`**: Exceção personalizada que é levantada quando a tentativa está incorreta.
+### **Reiniciar os Contêineres**
 
+bash
 
+Copiar código
 
-## Melhorias Futuras
+`docker compose restart` 
 
-- Implementar autenticação de usuário para salvar e carregar jogos.
-- Adicionar limite de tentativas.
-- Melhorar a interface de feedback para as tentativas de adivinhação.
+----------
 
-## Licença
+## **Monitoramento e Debug**
 
-Este projeto está licenciado sob a [MIT License](LICENSE).
+### **Visualizar Logs**
 
+Para visualizar os logs de todos os serviços:
+
+bash
+
+Copiar código
+
+`docker compose logs -f` 
+
+Para visualizar logs de um serviço específico:
+
+bash
+
+Copiar código
+
+`docker compose logs -f <service_name>` 
+
+### **Acessar um Contêiner**
+
+Para acessar um terminal de dentro de um contêiner:
+
+bash
+
+Copiar código
+
+`docker exec -it <container_name> /bin/sh`
+
+## **Considerações Finais**
+
+Este setup utiliza o Docker Compose para facilitar o desenvolvimento, permitindo que todos os serviços sejam gerenciados de forma centralizada.
+
+-   Certifique-se de configurar corretamente os arquivos `Dockerfile-*` e validar que todas as dependências estão instaladas nos serviços.

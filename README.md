@@ -142,19 +142,12 @@ Este serviço implementa um proxy reverso usando Nginx para gerenciar o tráfego
 
 Se necessário, você pode construir todas as imagens do projeto antes de iniciar:
 
-bash
-
-Copiar código
-
 `docker compose build` 
 
 ### **Passo 2: Subir os Contêineres**
 
 Suba os serviços definidos no `docker-compose.yml`:
 
-bash
-
-Copiar código
 
 `docker compose up -d` 
 
@@ -165,25 +158,13 @@ Copiar código
 
 ### **Verificar o Status dos Serviços**
 
-bash
-
-Copiar código
-
 `docker compose ps` 
 
 ### **Parar os Contêineres**
 
-bash
-
-Copiar código
-
 `docker compose down` 
 
 ### **Reiniciar os Contêineres**
-
-bash
-
-Copiar código
 
 `docker compose restart` 
 
@@ -195,21 +176,16 @@ Copiar código
 
 Para visualizar os logs de todos os serviços:
 
-Copiar código
-
 `docker compose logs -f` 
 
 Para visualizar logs de um serviço específico:
 
-Copiar código
 
 `docker compose logs -f <service_name>` 
 
 ### **Acessar um Contêiner**
 
 Para acessar um terminal de dentro de um contêiner:
-
-Copiar código
 
 `docker exec -it <container_name> /bin/sh`
 

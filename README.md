@@ -195,15 +195,11 @@ Copiar código
 
 Para visualizar os logs de todos os serviços:
 
-bash
-
 Copiar código
 
 `docker compose logs -f` 
 
 Para visualizar logs de um serviço específico:
-
-bash
 
 Copiar código
 
@@ -212,8 +208,6 @@ Copiar código
 ### **Acessar um Contêiner**
 
 Para acessar um terminal de dentro de um contêiner:
-
-bash
 
 Copiar código
 

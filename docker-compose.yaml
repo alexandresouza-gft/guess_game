@@ -35,20 +35,20 @@ services:
     networks:
       - game_network
 
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile-frontend
-    container_name: react-frontend
-    restart: always  # Reinicia automaticamente em caso de falha
-    environment:
-      - REACT_APP_BACKEND_URL=http://localhost:5000
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    networks:
-      - game_network
+  # frontend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile-frontend
+  #   container_name: react-frontend
+  #   restart: always  # Reinicia automaticamente em caso de falha
+  #   environment:
+  #     - REACT_APP_BACKEND_URL=http://localhost:5000
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - game_network
 
   nginx:
     build:
@@ -58,8 +58,8 @@ services:
     restart: always  # Reinicia automaticamente em caso de falha
     ports:
       - "80:80"
-    depends_on:
-      - frontend
+    # depends_on:
+    #   - frontend
     networks:
       - game_network
 
